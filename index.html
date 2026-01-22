@@ -2,8 +2,10 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
   <title>都市迷雾·觉醒之路</title>
+  <meta name="description" content="《都市丛林·物种觉醒深度诊断书》在线测试 —— 你是狮子、狐狸、黑猫，还是森鹿？">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🦁</text></svg>">
   <style>
     /* ========== 暗黑星光 UI ========== */
     :root {
@@ -373,7 +375,7 @@
         <strong>💡 提示：</strong>详情请查看《都市丛林 · 生存深度诊断书》
       </div>
       <footer>
-        <p>© 观心舟</p>
+        <p>© 观心舟 | 未经授权禁止商业转载</p>
       </footer>
     </div>
   </div>
@@ -381,48 +383,48 @@
   <script>
     // ===== 初始化星空背景 =====
     function createStars() {
-      const container = document.getElementById('stars');
-      const starCount = window.innerWidth > 600 ? 120 : 60;
-      
-      for (let i = 0; i < starCount; i++) {
-        const star = document.createElement('div');
-        star.classList.add('star');
+      try {
+        const container = document.getElementById('stars');
+        if (!container) return;
         
-        // 随机位置
-        const x = Math.random() * 100;
-        const y = Math.random() * 100;
-        star.style.left = `${x}%`;
-        star.style.top = `${y}%`;
+        const starCount = window.innerWidth > 600 ? 120 : 60;
         
-        // 随机大小 (0.5px ～ 2px)
-        const size = 0.5 + Math.random() * 1.5;
-        star.style.width = `${size}px`;
-        star.style.height = `${size}px`;
-        
-        // 随机动画时长 (2s ～ 6s)
-        const duration = 2 + Math.random() * 4;
-        star.style.setProperty('--duration', `${duration}s`);
-        
-        // 随机延迟
-        star.style.animationDelay = `${Math.random() * 5}s`;
-        
-        container.appendChild(star);
+        for (let i = 0; i < starCount; i++) {
+          const star = document.createElement('div');
+          star.classList.add('star');
+          
+          const x = Math.random() * 100;
+          const y = Math.random() * 100;
+          star.style.left = `${x}%`;
+          star.style.top = `${y}%`;
+          
+          const size = 0.5 + Math.random() * 1.5;
+          star.style.width = `${size}px`;
+          star.style.height = `${size}px`;
+          
+          const duration = 2 + Math.random() * 4;
+          star.style.setProperty('--duration', `${duration}s`);
+          star.style.animationDelay = `${Math.random() * 5}s`;
+          
+          container.appendChild(star);
+        }
+      } catch (e) {
+        // 忽略星空创建错误，不影响核心功能
       }
     }
 
-    // 页面加载完成后创建星空
+    // 确保DOM加载完成后再执行
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', createStars);
     } else {
       createStars();
     }
 
-    // ===== 数据结构 =====
+    // ===== 数据结构与逻辑 =====
     let scores = { L: 0, F: 0, C: 0, D: 0 };
     let singleAnswers = {};
     let multiChoices = { q3: [], q6: [] };
 
-    // 【关键修改】统一名称：使用诊断书中正式命名
     const questionMap = {
       'L': ['🦁', '荒原狮王'],
       'F': ['🦊', '千面灵狐'],
@@ -430,16 +432,13 @@
       'D': ['🦌', '迷雾森鹿']
     };
 
-    // 【关键修改】组合名称严格对齐诊断书第五章
     const comboNames = {
       'LF': '【帝国缔造者】',
       'LD': '【铁血守护者】',
       'FC': '【假面观察员】',
       'CL': '【冷血战略家】'
-      // 其他组合保留通用描述，因诊断书仅详述此4种复合形态
     };
 
-    // 【关键修改】组合描述完全引用诊断书原文
     const comboDescriptions = {
       'LF': '这是最完美的政客模型，也是成功率最高的配置。你拥有狮子的战略宏图，又修练出了狐狸的手腕身段。你知道什么时候该用雷霆手段杀伐决断，也知道什么时候该推杯换盏拉拢人心。你既是暴君，又是明星。',
       'LD': '极具反差魅力的领袖。外表是替大家挡风遮雨的霸气大哥/大姐，内心其实极其柔软细腻。“心有猛虎，细嗅蔷薇”说的就是你。跟随你的人会有极强的安全感，因为他们知道你会为了护犊子对抗全世界。',
@@ -447,60 +446,68 @@
       'CL': '幕后的操盘手。你本质喜欢独处，但为了达成目标，你逼迫自己站到台前。你的领导风格是精密计算的，不带感情色彩。你不打无准备之仗，你的每一个决策都经过了风险评估。你是一台没有感情的胜利机器。'
     };
 
-    // ===== 事件处理 =====
     function selectSingle(element, questionId, choice) {
       try {
+        // 检查元素是否存在
+        if (!element || !element.classList) return;
+        
         // 清除同题其他选项
         const options = document.querySelectorAll(`#${questionId} .option:not(.multi)`);
-        options.forEach(opt => {
-          if (opt && opt.classList) {
-            opt.classList.remove('selected');
-          }
-        });
-        
-        if (element && element.classList) {
-          element.classList.add('selected');
+        if (options) {
+          Array.from(options).forEach(opt => {
+            if (opt && opt.classList) {
+              opt.classList.remove('selected');
+            }
+          });
         }
         
-        // 映射 A->L, B->F, C->C, D->D
+        element.classList.add('selected');
+        
+        // 映射选择到类型
         const mappedChoice = mapChoiceToType(choice);
-        if (mappedChoice in scores) {
+        if (mappedChoice && scores.hasOwnProperty(mappedChoice)) {
           scores[mappedChoice]++;
         }
+        
         singleAnswers[questionId] = mappedChoice;
         
+        // 启用下一题按钮
         const button = document.getElementById(`btn-${questionId}`);
         if (button) {
           button.disabled = false;
         }
-      } catch(e) {
-        console.error("Error in selectSingle:", e);
+      } catch (e) {
+        console.error("Error in selectSingle:", e.message);
       }
     }
 
     function toggleMulti(element, questionId, choice) {
       try {
-        let currentList = multiChoices[questionId] || [];
+        if (!element || !element.classList) return;
+        
+        // 确保multiChoices中有对应题目的数组
+        if (!multiChoices[questionId]) {
+          multiChoices[questionId] = [];
+        }
+        
+        let currentList = multiChoices[questionId];
         
         if (currentList.includes(choice)) {
           multiChoices[questionId] = currentList.filter(c => c !== choice);
-          if (element && element.classList) {
-            element.classList.remove('selected');
-          }
+          element.classList.remove('selected');
         } else if (currentList.length < 2) {
           multiChoices[questionId] = [...currentList, choice];
-          if (element && element.classList) {
-            element.classList.add('selected');
-          }
+          element.classList.add('selected');
         }
         
         updateMultiWarning(questionId);
+        
         const button = document.getElementById(`btn-${questionId}`);
         if (button) {
           button.disabled = (multiChoices[questionId].length === 0);
         }
-      } catch(e) {
-        console.error("Error in toggleMulti:", e);
+      } catch (e) {
+        console.error("Error in toggleMulti:", e.message);
       }
     }
 
@@ -511,24 +518,30 @@
           const currentList = multiChoices[questionId] || [];
           warnEl.textContent = currentList.length >= 2 ? '已选2项，无法再选' : '';
         }
-      } catch(e) {
-        console.error("Error in updateMultiWarning:", e);
+      } catch (e) {
+        console.warn("Error updating multi warning:", e.message);
       }
     }
 
     function showScreen(screenId) {
       try {
-        document.querySelectorAll('.screen').forEach(el => {
-          if (el && el.classList) {
-            el.classList.remove('active');
-          }
-        });
+        // 隐藏所有屏幕
+        const screens = document.querySelectorAll('.screen');
+        if (screens) {
+          Array.from(screens).forEach(el => {
+            if (el && el.classList) {
+              el.classList.remove('active');
+            }
+          });
+        }
+        
+        // 显示目标屏幕
         const targetScreen = document.getElementById(screenId);
         if (targetScreen && targetScreen.classList) {
           targetScreen.classList.add('active');
         }
-      } catch(e) {
-        console.error("Error in showScreen:", e);
+      } catch (e) {
+        console.error("Error in showScreen:", e.message);
       }
     }
 
@@ -536,39 +549,47 @@
       showScreen(next);
     }
 
-    // ===== 核心算法：严格按照 v2.0 规则 =====
     function calculateResult() {
       try {
-        // Step 1: 处理多选题加分
+        // 处理多选题加分
         processMultiChoices();
 
-        // Step 2: 判定底色人格（Base Persona）
+        // 判定底色人格
         const basePersona = determineBasePersona();
+        if (!basePersona) {
+          throw new Error("Cannot determine base persona");
+        }
 
-        // Step 3: 判定面具人格（Mask Persona）
+        // 判定面具人格
         const maskPersona = determineMaskPersona(basePersona);
+        if (!maskPersona) {
+          throw new Error("Cannot determine mask persona");
+        }
 
         const titleEl = document.getElementById('result-title');
         const descEl = document.getElementById('result-desc');
         const insightEl = document.getElementById('result-insight');
 
-        // 纯血人格的小知识模板（严格对齐诊断书第五章）
+        if (!titleEl || !descEl || !insightEl) {
+          throw new Error("Result elements not found");
+        }
+
+        // 纯血人格的小知识模板
         const pureInsights = {
           'L': '纯血狮：孤独的暴君。除了一路向上，你别无选择。你的宿命就是征服，或者死在征服的路上。',
-          'F': '纯血狐：千面戏子。人生如戏，对你来说没有真假，只有“好戏”和“烂戏”。你可能已经忘了自己长什么样。',
+          'F': '纯血狐：千面戏子。人生如戏，对你来说没有真假，只有"好戏"和"烂戏"。你可能已经忘了自己长什么样。',
           'C': '纯血猫：疯批天才。你是离神最近、也离精神病院最近的人。如果你能找到一个能读懂你代码的人，你会改变世界；否则，你会溺死在自己的精神世界里。',
           'D': '纯血鹿：受难圣徒。你的善良是一种信仰。在这个疯狂的世界里，你是最后一道防线。你以自我牺牲来救赎他人。'
         };
 
-        // 组合人格的小知识模板（按 CF 格式统一生成）
+        // 组合人格的小知识模板
         const comboInsight = 
           `底色是 ${basePersona}（${questionMap[basePersona][1]}）\n` +
           `面具是 ${maskPersona}（${questionMap[maskPersona][1]}）`;
 
         if (scores[basePersona] >= 9) {
-          // 纯血结果（诊断书要求 >75%，共12题，9/12=75%）
-          const fullTitle = `【纯血·${questionMap[basePersona][1]}】`;
-          titleEl.textContent = `${questionMap[basePersona][1]}（${basePersona}）`;
+          // 纯血结果
+          titleEl.textContent = `【纯血·${questionMap[basePersona][1]}】`;
           descEl.textContent = getPureBloodDescription(basePersona);
           insightEl.textContent = pureInsights[basePersona];
         } else {
@@ -576,10 +597,8 @@
           const comboKey = basePersona + maskPersona;
           const comboName = comboNames[comboKey] || `${questionMap[basePersona][1]}+${questionMap[maskPersona][1]}`;
           
-          // 标题格式：【帝国缔造者】（LF）
           titleEl.textContent = `${comboName}（${comboKey}）`;
           
-          // 描述优先使用诊断书定义，否则回退
           descEl.textContent = comboDescriptions[comboKey] || 
             `${questionMap[basePersona][1]}与${questionMap[maskPersona][1]}的融合体，复杂而多面。`;
           
@@ -587,16 +606,20 @@
         }
 
         showScreen('result-screen');
-      } catch(e) {
-        console.error("Error in calculateResult:", e);
-        document.getElementById('result-title').textContent = "计算出错";
-        document.getElementById('result-desc').textContent = "请刷新页面重试";
-        document.getElementById('result-insight').textContent = "";
+      } catch (e) {
+        console.error("Error in calculateResult:", e.message);
+        const titleEl = document.getElementById('result-title');
+        const descEl = document.getElementById('result-desc');
+        const insightEl = document.getElementById('result-insight');
+        
+        if (titleEl) titleEl.textContent = "计算出错";
+        if (descEl) descEl.textContent = "请刷新页面重试";
+        if (insightEl) insightEl.textContent = "";
+        
         showScreen('result-screen');
       }
     }
 
-    // 辅助函数
     function mapChoiceToType(choice) {
       const mapping = { 'A': 'L', 'B': 'F', 'C': 'C', 'D': 'D' };
       return mapping[choice] || choice;
@@ -604,35 +627,28 @@
 
     function processMultiChoices() {
       try {
-        // Q3 处理
-        (multiChoices.q3 || []).forEach(choice => {
-          if (['A','B','C','D'].includes(choice)) {
-            const mapped = mapChoiceToType(choice);
-            if (mapped in scores) {
-              scores[mapped]++;
+        ['q3', 'q6'].forEach(questionId => {
+          const choices = multiChoices[questionId] || [];
+          
+          choices.forEach(choice => {
+            if (['A','B','C','D'].includes(choice)) {
+              const mapped = mapChoiceToType(choice);
+              if (mapped && scores.hasOwnProperty(mapped)) {
+                scores[mapped]++;
+              }
+            } else if (choice === 'E') { 
+              // E选项：真视之眼 -> C(黑猫)+1, L(狮子)+1
+              scores.C = (scores.C || 0) + 1;
+              scores.L = (scores.L || 0) + 1;
+            } else if (choice === 'F') { 
+              // F选项：扩音喇叭 -> F(狐狸)+1, L(狮子)+1
+              scores.F = (scores.F || 0) + 1;
+              scores.L = (scores.L || 0) + 1;
             }
-          } else if (choice === 'E') { // 真视/闪避 → C+1, L+1
-            scores.C++; scores.L++;
-          } else if (choice === 'F') { // 扩音/召唤 → F+1, L+1
-            scores.F++; scores.L++;
-          }
+          });
         });
-
-        // Q6 处理（同上）
-        (multiChoices.q6 || []).forEach(choice => {
-          if (['A','B','C','D'].includes(choice)) {
-            const mapped = mapChoiceToType(choice);
-            if (mapped in scores) {
-              scores[mapped]++;
-            }
-          } else if (choice === 'E') {
-            scores.C++; scores.L++;
-          } else if (choice === 'F') {
-            scores.F++; scores.L++;
-          }
-        });
-      } catch(e) {
-        console.error("Error in processMultiChoices:", e);
+      } catch (e) {
+        console.error("Error in processMultiChoices:", e.message);
       }
     }
 
@@ -647,30 +663,32 @@
         }
 
         // 平局：用 Q12 一票否决
-        if (singleAnswers.q12) {
+        if (singleAnswers.q12 && topTypes.includes(singleAnswers.q12)) {
           return singleAnswers.q12;
         }
         
-        // 安全兜底（理论上不会触发）
-        return topTypes[0];
-      } catch(e) {
-        console.error("Error in determineBasePersona:", e);
+        // 安全兜底
+        return topTypes[0] || 'L';
+      } catch (e) {
+        console.error("Error in determineBasePersona:", e.message);
         return 'L'; // 兜底返回
       }
     }
 
     function determineMaskPersona(base) {
       try {
+        if (!base) return 'F'; // 如果没有底色，返回默认面具
+        
         // 规则 A：多选题强制优先
         const allMultiChoices = [...(multiChoices.q3 || []), ...(multiChoices.q6 || [])];
         const nonBaseChoices = allMultiChoices
           .map(c => mapChoiceToType(c))
-          .filter(type => type !== base);
+          .filter(type => type !== base && type !== undefined);
 
         // 统计非底色人格出现次数
         const count = {};
         nonBaseChoices.forEach(type => {
-          if (type !== base) { // 确保不包含底色
+          if (type !== base) {
             count[type] = (count[type] || 0) + 1;
           }
         });
@@ -703,23 +721,21 @@
           }
         }
 
-        // 如果 Q3 没涉及，用 Q1
         if (singleAnswers.q1 && secondTypes.includes(singleAnswers.q1)) {
           return singleAnswers.q1;
         }
 
-        return secondTypes[0]; // 最终兜底
-      } catch(e) {
-        console.error("Error in determineMaskPersona:", e);
+        return secondTypes[0] || base; // 最终兜底
+      } catch (e) {
+        console.error("Error in determineMaskPersona:", e.message);
         return 'F'; // 兜底返回
       }
     }
 
     function getPureBloodDescription(type) {
-      // 【关键修改】纯血描述完全对齐诊断书第五章
       const descriptions = {
         'L': '孤独的暴君。除了一路向上，你别无选择。你的宿命就是征服，或者死在征服的路上。',
-        'F': '千面戏子。人生如戏，对你来说没有真假，只有“好戏”和“烂戏”。你可能已经忘了自己长什么样。',
+        'F': '千面戏子。人生如戏，对你来说没有真假，只有"好戏"和"烂戏"。你可能已经忘了自己长什么样。',
         'C': '疯批天才。你是离神最近、也离精神病院最近的人。如果你能找到一个能读懂你代码的人，你会改变世界；否则，你会溺死在自己的精神世界里。',
         'D': '受难圣徒。你的善良是一种信仰。在这个疯狂的世界里，你是最后一道防线。你以自我牺牲来救赎他人。'
       };
