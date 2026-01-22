@@ -89,6 +89,13 @@
       margin: 12px 0;
       font-size: 16px;
     }
+    .cover-text {
+      font-size: 18px;
+      line-height: 1.8;
+      text-align: center;
+      margin: 25px 0;
+      color: #ccc;
+    }
     .chapter-desc {
       font-style: italic;
       color: #aaa;
@@ -151,16 +158,17 @@
       color: white;
     }
     .result-desc {
-      font-size: 16px;
-      color: #ccc;
+      font-size: 17px;
+      color: #ddd;
       margin: 20px 0;
-      line-height: 1.7;
+      line-height: 1.8;
     }
     .result-insight {
       color: #aaa;
-      font-size: 15px;
-      margin-top: 15px;
-      line-height: 1.6;
+      font-size: 16px;
+      margin-top: 20px;
+      line-height: 1.7;
+      white-space: pre-line;
     }
     .save-hint {
       background: rgba(187, 134, 252, 0.1);
@@ -179,6 +187,7 @@
     @media (max-width: 600px) {
       .screen { padding: 20px 15px; }
       h1 { font-size: 24px; }
+      .cover-text { font-size: 16px; }
       .btn { width: 100%; margin: 8px 0; }
     }
   </style>
@@ -191,12 +200,18 @@
     <!-- 封面 -->
     <div id="screen-cover" class="screen active">
       <h1>都市迷雾·觉醒之路</h1>
-      <p style="text-align:center; margin:20px 0;">
+      <p class="cover-text">
         欢迎来到都市丛林。<br>
-        在这里，没有绝对的善恶，只有生存的本能。
-      </p>
-      <p style="text-align:center; color:#aaa; font-style:italic;">
-        请跟随第一直觉作答。
+        这里没有童话，只有生存的本能。<br>
+        每一次呼吸、每一次选择，<br>
+        都在决定你站在食物链的哪一层。
+        <br><br>
+        屏蔽所有“应该”和“道理”。<br>
+        你的第一直觉，<br>
+        才是你深埋在基因里的导航。
+        <br><br>
+        这个测试不评判善恶，只解剖真实。<br>
+        准备好，看清自己真正的模样。
       </p>
       <div style="text-align:center; margin-top:30px;">
         <button class="btn" onclick="showScreen('q1')">踏入丛林</button>
@@ -369,7 +384,7 @@
       <div class="result-card">
         <h2 class="result-title" id="result-title">-</h2>
         <p class="result-desc" id="result-desc">-</p>
-        <p class="result-insight" id="result-insight" style="color:#aaa; font-size:15px; margin-top:15px; line-height:1.6;"></p>
+        <p class="result-insight" id="result-insight" style="color:#aaa; font-size:16px; margin-top:20px; line-height:1.7; white-space:pre-line;"></p>
       </div>
       <div class="save-hint">
         <strong>💡 提示：</strong>详情请查看《都市丛林 · 生存深度诊断书》
