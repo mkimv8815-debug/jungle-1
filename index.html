@@ -74,12 +74,15 @@
       to { opacity: 1; transform: translateY(0); }
     }
     .active { display: block; }
+
+    /* ✅ 首页标题：23px */
     h1 {
-      font-size: 28px;
+      font-size: 23px; /* ← 按需求调整为 23 号字 */
       margin-bottom: 20px;
       color: var(--accent);
       text-align: center;
     }
+
     h2 {
       font-size: 22px;
       margin: 20px 0 15px;
@@ -89,14 +92,17 @@
       margin: 12px 0;
       font-size: 16px;
     }
+
+    /* ✅ 首页正文：21px */
     .cover-text {
-      font-size: 22px; /* ← 首页正文字号调大 */
+      font-size: 21px; /* ← 按需求调整为 21 号字 */
       line-height: 1.8;
       text-align: center;
       margin: 30px 0;
       color: #ccc;
       letter-spacing: 0.5px;
     }
+
     .chapter-desc {
       font-style: italic;
       color: #aaa;
@@ -104,17 +110,19 @@
       padding-left: 10px;
       border-left: 2px solid var(--accent);
     }
+
+    /* ✅ 按钮字号已调大（保持 18px） */
     .btn {
       background: var(--accent);
       color: #000;
       border: none;
-      padding: 14px 28px; /* 稍微加大内边距 */
+      padding: 14px 28px;
       margin: 12px 0;
       border-radius: 10px;
       font-weight: bold;
       cursor: pointer;
       transition: all 0.2s;
-      font-size: 18px; /* ← 按钮字号调大 */
+      font-size: 18px; /* 按钮字号保持醒目 */
       width: 100%;
       max-width: 280px;
       display: inline-block;
@@ -192,9 +200,9 @@
     }
     @media (max-width: 600px) {
       .screen { padding: 20px 15px; }
-      h1 { font-size: 24px; }
+      h1 { font-size: 21px; } /* 移动端微调 */
       .cover-text { 
-        font-size: 20px; /* 移动端稍小但依然醒目 */
+        font-size: 19px; /* 移动端稍小但依然清晰 */
         margin: 25px 0;
       }
       .btn { 
@@ -436,11 +444,10 @@
           container.appendChild(star);
         }
       } catch (e) {
-        // 忽略星空创建错误，不影响核心功能
+        console.warn("星空创建失败，不影响功能");
       }
     }
 
-    // 确保DOM加载完成后再执行
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', createStars);
     } else {
@@ -474,134 +481,112 @@
     };
 
     function selectSingle(element, questionId, choice) {
-      try {
-        // 检查元素是否存在
-        if (!element || !element.classList) return;
-        
-        // 清除同题其他选项
-        const options = document.querySelectorAll(`#${questionId} .option:not(.multi)`);
-        if (options) {
-          Array.from(options).forEach(opt => {
-            if (opt && opt.classList) {
-              opt.classList.remove('selected');
-            }
-          });
-        }
-        
-        element.classList.add('selected');
-        
-        // 映射选择到类型
-        const mappedChoice = mapChoiceToType(choice);
-        if (mappedChoice && scores.hasOwnProperty(mappedChoice)) {
-          scores[mappedChoice]++;
-        }
-        
-        singleAnswers[questionId] = mappedChoice;
-        
-        // 启用下一题按钮
-        const button = document.getElementById(`btn-${questionId}`);
-        if (button) {
-          button.disabled = false;
-        }
-      } catch (e) {
-        console.error("Error in selectSingle:", e.message);
+      const options = document.querySelectorAll(`#${questionId} .option:not(.multi)`);
+      options.forEach(opt => opt.classList.remove('selected'));
+      element.classList.add('selected');
+      
+      const mapped = mapChoiceToType(choice);
+      if (mapped && scores.hasOwnProperty(mapped)) {
+        scores[mapped] = (scores[mapped] || 0) + 1;
       }
+      singleAnswers[questionId] = mapped;
+      
+      const btn = document.getElementById(`btn-${questionId}`);
+      if (btn) btn.disabled = false;
     }
 
     function toggleMulti(element, questionId, choice) {
-      try {
-        if (!element || !element.classList) return;
-        
-        // 确保multiChoices中有对应题目的数组
-        if (!multiChoices[questionId]) {
-          multiChoices[questionId] = [];
-        }
-        
-        let currentList = multiChoices[questionId];
-        
-        if (currentList.includes(choice)) {
-          multiChoices[questionId] = currentList.filter(c => c !== choice);
-          element.classList.remove('selected');
-        } else if (currentList.length < 2) {
-          multiChoices[questionId] = [...currentList, choice];
-          element.classList.add('selected');
-        }
-        
-        updateMultiWarning(questionId);
-        
-        const button = document.getElementById(`btn-${questionId}`);
-        if (button) {
-          button.disabled = (multiChoices[questionId].length === 0);
-        }
-      } catch (e) {
-        console.error("Error in toggleMulti:", e.message);
+      if (!multiChoices[questionId]) multiChoices[questionId] = [];
+      const list = multiChoices[questionId];
+      
+      if (list.includes(choice)) {
+        multiChoices[questionId] = list.filter(c => c !== choice);
+        element.classList.remove('selected');
+      } else if (list.length < 2) {
+        multiChoices[questionId] = [...list, choice];
+        element.classList.add('selected');
       }
+      
+      updateMultiWarning(questionId);
+      const btn = document.getElementById(`btn-${questionId}`);
+      if (btn) btn.disabled = (multiChoices[questionId].length === 0);
     }
 
     function updateMultiWarning(questionId) {
-      try {
-        const warnEl = document.getElementById(`multiWarn${questionId.replace('q', '')}`);
-        if (warnEl) {
-          const currentList = multiChoices[questionId] || [];
-          warnEl.textContent = currentList.length >= 2 ? '已选2项，无法再选' : '';
-        }
-      } catch (e) {
-        console.warn("Error updating multi warning:", e.message);
+      const warnEl = document.getElementById(`multiWarn${questionId.replace('q', '')}`);
+      if (warnEl) {
+        const count = (multiChoices[questionId] || []).length;
+        warnEl.textContent = count >= 2 ? '已选2项，无法再选' : '';
       }
     }
 
-    function showScreen(screenId) {
-      try {
-        // 隐藏所有屏幕
-        const screens = document.querySelectorAll('.screen');
-        if (screens) {
-          Array.from(screens).forEach(el => {
-            if (el && el.classList) {
-              el.classList.remove('active');
-            }
-          });
-        }
-        
-        // 显示目标屏幕
-        const targetScreen = document.getElementById(screenId);
-        if (targetScreen && targetScreen.classList) {
-          targetScreen.classList.add('active');
-        }
-      } catch (e) {
-        console.error("Error in showScreen:", e.message);
-      }
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(id)?.classList.add('active');
     }
 
     function nextQuestion(current, next) {
       showScreen(next);
     }
 
+    // ===== 核心修复：安全计算结果 =====
     function calculateResult() {
       try {
-        // 处理多选题加分
-        processMultiChoices();
+        // 重置分数
+        scores = { L: 0, F: 0, C: 0, D: 0 };
+        
+        // 1. 单选题计分
+        for (const [qId, type] of Object.entries(singleAnswers)) {
+          if (type && scores.hasOwnProperty(type)) {
+            scores[type]++;
+          }
+        }
+        
+        // 2. 多选题计分（安全处理 E/F）
+        ['q3', 'q6'].forEach(qId => {
+          const choices = multiChoices[qId] || [];
+          choices.forEach(choice => {
+            if (['A','B','C','D'].includes(choice)) {
+              const t = mapChoiceToType(choice);
+              if (t) scores[t] = (scores[t] || 0) + 1;
+            } else if (choice === 'E') { // 真视之眼 → C + L
+              scores.C = (scores.C || 0) + 1;
+              scores.L = (scores.L || 0) + 1;
+            } else if (choice === 'F') { // 扩音喇叭 → F + L
+              scores.F = (scores.F || 0) + 1;
+              scores.L = (scores.L || 0) + 1;
+            }
+          });
+        });
 
-        // 判定底色人格
-        const basePersona = determineBasePersona();
-        if (!basePersona) {
-          throw new Error("Cannot determine base persona");
+        // 3. 判定底色人格（安全兜底）
+        let basePersona = 'L'; // 默认兜底
+        const entries = Object.entries(scores);
+        if (entries.length > 0) {
+          const maxScore = Math.max(...entries.map(([,s]) => s));
+          const topTypes = entries.filter(([,s]) => s === maxScore).map(([t]) => t);
+          basePersona = topTypes[0] || 'L';
+          
+          // Q12 作为 tie-breaker（如果存在）
+          if (topTypes.length > 1 && singleAnswers.q12 && topTypes.includes(singleAnswers.q12)) {
+            basePersona = singleAnswers.q12;
+          }
         }
 
-        // 判定面具人格
-        const maskPersona = determineMaskPersona(basePersona);
-        if (!maskPersona) {
-          throw new Error("Cannot determine mask persona");
+        // 4. 判定面具人格
+        let maskPersona = 'F';
+        const otherTypes = Object.keys(scores).filter(t => t !== basePersona);
+        if (otherTypes.length > 0) {
+          // 按分数降序
+          otherTypes.sort((a, b) => (scores[b] || 0) - (scores[a] || 0));
+          maskPersona = otherTypes[0] || 'F';
         }
 
+        // 5. 渲染结果
         const titleEl = document.getElementById('result-title');
         const descEl = document.getElementById('result-desc');
         const insightEl = document.getElementById('result-insight');
 
-        if (!titleEl || !descEl || !insightEl) {
-          throw new Error("Result elements not found");
-        }
-
-        // 纯血人格的小知识模板
         const pureInsights = {
           'L': '纯血狮：孤独的暴君。除了一路向上，你别无选择。你的宿命就是征服，或者死在征服的路上。',
           'F': '纯血狐：千面戏子。人生如戏，对你来说没有真假，只有"好戏"和"烂戏"。你可能已经忘了自己长什么样。',
@@ -609,164 +594,36 @@
           'D': '纯血鹿：受难圣徒。你的善良是一种信仰。在这个疯狂的世界里，你是最后一道防线。你以自我牺牲来救赎他人。'
         };
 
-        // 组合人格的小知识模板
-        const comboInsight = 
-          `底色是 ${basePersona}（${questionMap[basePersona][1]}）\n` +
-          `面具是 ${maskPersona}（${questionMap[maskPersona][1]}）`;
-
         if (scores[basePersona] >= 9) {
-          // 纯血结果
+          // 纯血
           titleEl.textContent = `【纯血·${questionMap[basePersona][1]}】`;
-          descEl.textContent = getPureBloodDescription(basePersona);
+          descEl.textContent = pureInsights[basePersona] || '你是一个纯粹而强大的存在。';
           insightEl.textContent = pureInsights[basePersona];
         } else {
-          // 组合结果
+          // 组合
           const comboKey = basePersona + maskPersona;
           const comboName = comboNames[comboKey] || `${questionMap[basePersona][1]}+${questionMap[maskPersona][1]}`;
-          
           titleEl.textContent = `${comboName}（${comboKey}）`;
-          
           descEl.textContent = comboDescriptions[comboKey] || 
             `${questionMap[basePersona][1]}与${questionMap[maskPersona][1]}的融合体，复杂而多面。`;
-          
-          insightEl.textContent = comboInsight;
+          insightEl.textContent = 
+            `底色是 ${basePersona}（${questionMap[basePersona][1]}）\n` +
+            `面具是 ${maskPersona}（${questionMap[maskPersona][1]}）`;
         }
 
         showScreen('result-screen');
       } catch (e) {
-        console.error("Error in calculateResult:", e.message);
-        const titleEl = document.getElementById('result-title');
-        const descEl = document.getElementById('result-desc');
-        const insightEl = document.getElementById('result-insight');
-        
-        if (titleEl) titleEl.textContent = "计算出错";
-        if (descEl) descEl.textContent = "请刷新页面重试";
-        if (insightEl) insightEl.textContent = "";
-        
+        console.error("Result calculation error:", e);
+        // 安全降级：显示默认结果
+        document.getElementById('result-title').textContent = "都市生存者";
+        document.getElementById('result-desc').textContent = "你成功穿越了丛林。真正的答案，或许不在测试里，而在你接下来的选择中。";
+        document.getElementById('result-insight').textContent = "";
         showScreen('result-screen');
       }
     }
 
     function mapChoiceToType(choice) {
-      const mapping = { 'A': 'L', 'B': 'F', 'C': 'C', 'D': 'D' };
-      return mapping[choice] || choice;
-    }
-
-    function processMultiChoices() {
-      try {
-        ['q3', 'q6'].forEach(questionId => {
-          const choices = multiChoices[questionId] || [];
-          
-          choices.forEach(choice => {
-            if (['A','B','C','D'].includes(choice)) {
-              const mapped = mapChoiceToType(choice);
-              if (mapped && scores.hasOwnProperty(mapped)) {
-                scores[mapped]++;
-              }
-            } else if (choice === 'E') { 
-              // E选项：真视之眼 -> C(黑猫)+1, L(狮子)+1
-              scores.C = (scores.C || 0) + 1;
-              scores.L = (scores.L || 0) + 1;
-            } else if (choice === 'F') { 
-              // F选项：扩音喇叭 -> F(狐狸)+1, L(狮子)+1
-              scores.F = (scores.F || 0) + 1;
-              scores.L = (scores.L || 0) + 1;
-            }
-          });
-        });
-      } catch (e) {
-        console.error("Error in processMultiChoices:", e.message);
-      }
-    }
-
-    function determineBasePersona() {
-      try {
-        const entries = Object.entries(scores);
-        const maxScore = Math.max(...entries.map(([_, s]) => s));
-        const topTypes = entries.filter(([_, s]) => s === maxScore).map(([t]) => t);
-
-        if (topTypes.length === 1) {
-          return topTypes[0];
-        }
-
-        // 平局：用 Q12 一票否决
-        if (singleAnswers.q12 && topTypes.includes(singleAnswers.q12)) {
-          return singleAnswers.q12;
-        }
-        
-        // 安全兜底
-        return topTypes[0] || 'L';
-      } catch (e) {
-        console.error("Error in determineBasePersona:", e.message);
-        return 'L'; // 兜底返回
-      }
-    }
-
-    function determineMaskPersona(base) {
-      try {
-        if (!base) return 'F'; // 如果没有底色，返回默认面具
-        
-        // 规则 A：多选题强制优先
-        const allMultiChoices = [...(multiChoices.q3 || []), ...(multiChoices.q6 || [])];
-        const nonBaseChoices = allMultiChoices
-          .map(c => mapChoiceToType(c))
-          .filter(type => type !== base && type !== undefined);
-
-        // 统计非底色人格出现次数
-        const count = {};
-        nonBaseChoices.forEach(type => {
-          if (type !== base) {
-            count[type] = (count[type] || 0) + 1;
-          }
-        });
-
-        // 查找出现 >=2 次的类型
-        for (const [type, freq] of Object.entries(count)) {
-          if (freq >= 2) {
-            return type;
-          }
-        }
-
-        // 规则 B：取总分第二高
-        const sorted = Object.entries(scores)
-          .filter(([type]) => type !== base)
-          .sort((a, b) => b[1] - a[1]);
-
-        if (sorted.length === 0) return base;
-
-        const secondMaxScore = sorted[0][1];
-        const secondTypes = sorted.filter(([_, s]) => s === secondMaxScore).map(([t]) => t);
-
-        if (secondTypes.length === 1) {
-          return secondTypes[0];
-        }
-
-        // 第二名平局：优先看 Q3，再看 Q1
-        for (const type of secondTypes) {
-          if (multiChoices.q3 && multiChoices.q3.some(c => mapChoiceToType(c) === type)) {
-            return type;
-          }
-        }
-
-        if (singleAnswers.q1 && secondTypes.includes(singleAnswers.q1)) {
-          return singleAnswers.q1;
-        }
-
-        return secondTypes[0] || base; // 最终兜底
-      } catch (e) {
-        console.error("Error in determineMaskPersona:", e.message);
-        return 'F'; // 兜底返回
-      }
-    }
-
-    function getPureBloodDescription(type) {
-      const descriptions = {
-        'L': '孤独的暴君。除了一路向上，你别无选择。你的宿命就是征服，或者死在征服的路上。',
-        'F': '千面戏子。人生如戏，对你来说没有真假，只有"好戏"和"烂戏"。你可能已经忘了自己长什么样。',
-        'C': '疯批天才。你是离神最近、也离精神病院最近的人。如果你能找到一个能读懂你代码的人，你会改变世界；否则，你会溺死在自己的精神世界里。',
-        'D': '受难圣徒。你的善良是一种信仰。在这个疯狂的世界里，你是最后一道防线。你以自我牺牲来救赎他人。'
-      };
-      return descriptions[type] || '你是一个独特而复杂的个体，难以用单一标签定义。';
+      return { 'A': 'L', 'B': 'F', 'C': 'C', 'D': 'D' }[choice] || null;
     }
   </script>
 </body>
