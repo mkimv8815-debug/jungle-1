@@ -77,7 +77,7 @@
 
     /* ✅ 首页标题：25px */
     h1 {
-      font-size: 25px; /* ← 已按最新要求调整为 25 号字 */
+      font-size: 25px;
       margin-bottom: 20px;
       color: var(--accent);
       text-align: center;
@@ -95,7 +95,7 @@
 
     /* ✅ 首页正文：19px */
     .cover-text {
-      font-size: 19px; /* ← 已按最新要求调整为 19 号字 */
+      font-size: 19px;
       line-height: 1.8;
       text-align: center;
       margin: 30px 0;
@@ -111,7 +111,7 @@
       border-left: 2px solid var(--accent);
     }
 
-    /* 按钮字号保持 18px（未变） */
+    /* 按钮字号保持 18px */
     .btn {
       background: var(--accent);
       color: #000;
@@ -200,15 +200,9 @@
     }
     @media (max-width: 600px) {
       .screen { padding: 20px 15px; }
-      h1 { font-size: 23px; } /* 移动端微调：比桌面小 2px */
-      .cover-text { 
-        font-size: 17px; /* 移动端微调：比桌面小 2px */
-        margin: 25px 0;
-      }
-      .btn { 
-        font-size: 17px;
-        padding: 12px 24px;
-      }
+      h1 { font-size: 23px; }
+      .cover-text { font-size: 17px; margin: 25px 0; }
+      .btn { font-size: 17px; padding: 12px 24px; }
     }
   </style>
 </head>
@@ -455,7 +449,6 @@
     }
 
     // ===== 数据结构与逻辑 =====
-    let scores = { L: 0, F: 0, C: 0, D: 0 };
     let singleAnswers = {};
     let multiChoices = { q3: [], q6: [] };
 
@@ -466,7 +459,6 @@
       'D': ['🦌', '迷雾森鹿']
     };
 
-    // ✅【关键更新】：完整 12 种复合形态定义
     const comboNames = {
       'LF': '【帝国缔造者】',
       'LD': '【铁血守护者】',
@@ -502,11 +494,17 @@
       options.forEach(opt => opt.classList.remove('selected'));
       element.classList.add('selected');
       
-      const mapped = mapChoiceToType(choice);
-      if (mapped && scores.hasOwnProperty(mapped)) {
-        scores[mapped] = (scores[mapped] || 0) + 1;
+      // 【修复】安全调用 mapChoiceToType
+      if (choice) {
+        const mapped = mapChoiceToType(choice);
+        if (mapped) {
+          singleAnswers[questionId] = mapped;
+        } else {
+          delete singleAnswers[questionId]; // 删除无效答案
+        }
+      } else {
+        delete singleAnswers[questionId]; // 删除无效答案
       }
-      singleAnswers[questionId] = mapped;
       
       const btn = document.getElementById(`btn-${questionId}`);
       if (btn) btn.disabled = false;
@@ -546,60 +544,66 @@
       showScreen(next);
     }
 
-    // ===== 核心逻辑：计算结果 =====
+    function mapChoiceToType(choice) {
+      return { 'A': 'L', 'B': 'F', 'C': 'C', 'D': 'D' }[choice] || null;
+    }
+
+    // ===== 核心逻辑：计算结果（终极鲁棒版）=====
     function calculateResult() {
       try {
-        // 重新初始化分数
-        scores = { L: 0, F: 0, C: 0, D: 0 };
+        // ===== 第一步：重置并计算分数 =====
+        let scores = { L: 0, F: 0, C: 0, D: 0 };
         
-        // 处理单选题
-        for (const [qId, type] of Object.entries(singleAnswers)) {
-          if (type && scores.hasOwnProperty(type)) {
-            scores[type]++;
+        // 处理单选题（Q1-Q2, Q4-Q5, Q7-Q12）
+        const singleQuestions = ['q1','q2','q4','q5','q7','q8','q9','q10','q11','q12'];
+        singleQuestions.forEach(qId => {
+          const choice = singleAnswers[qId];
+          if (choice && scores.hasOwnProperty(choice)) {
+            scores[choice]++;
           }
-        }
+        });
         
-        // 处理多选题
+        // 处理多选题（Q3, Q6）
         ['q3', 'q6'].forEach(qId => {
           const choices = multiChoices[qId] || [];
           choices.forEach(choice => {
-            // 安全映射选项到类型
-            if (choice === 'A') scores.L = (scores.L || 0) + 1;
-            else if (choice === 'B') scores.F = (scores.F || 0) + 1;
-            else if (choice === 'C') scores.C = (scores.C || 0) + 1;
-            else if (choice === 'D') scores.D = (scores.D || 0) + 1;
-            else if (choice === 'E') { // 真视之眼: 逻辑+权威
-              scores.C = (scores.C || 0) + 1;
-              scores.L = (scores.L || 0) + 1;
-            }
-            else if (choice === 'F') { // 扩音喇叭: 社交+权威
-              scores.F = (scores.F || 0) + 1;
-              scores.L = (scores.L || 0) + 1;
+            switch(choice) {
+              case 'A': scores.L++; break;
+              case 'B': scores.F++; break;
+              case 'C': scores.C++; break;
+              case 'D': scores.D++; break;
+              case 'E': scores.C++; scores.L++; break; // 真视之眼
+              case 'F': scores.F++; scores.L++; break; // 扩音喇叭
+              default: /* 忽略无效选项 */
             }
           });
         });
 
-        // 确定基础人格
-        let basePersona = 'L';
-        const entries = Object.entries(scores);
-        if (entries.length > 0) {
-          const maxScore = Math.max(...entries.map(([,s]) => s));
-          const topTypes = entries.filter(([,s]) => s === maxScore).map(([t]) => t);
-          basePersona = topTypes[0] || 'L';
-          // 如果第12题的选择在最高分类型中，则优先使用
-          if (topTypes.length > 1 && singleAnswers.q12 && topTypes.includes(singleAnswers.q12)) {
-            basePersona = singleAnswers.q12;
-          }
+        // ===== 第二步：确定主副人格（带兜底） =====
+        const types = ['L', 'F', 'C', 'D'];
+        const totalScore = Object.values(scores).reduce((a, b) => a + b, 0);
+        
+        // 【兜底1】如果总分为0（用户没答题），按默认分布
+        if (totalScore === 0) {
+          scores = { L: 3, F: 3, C: 3, D: 3 }; // 平衡型
         }
 
-        // 确定面具人格
-        let maskPersona = 'F';
-        const otherTypes = Object.keys(scores).filter(t => t !== basePersona);
-        if (otherTypes.length > 0) {
-          otherTypes.sort((a, b) => (scores[b] || 0) - (scores[a] || 0));
-          maskPersona = otherTypes[0] || 'F';
+        // 排序：高分到低分
+        const sortedTypes = types.sort((a, b) => scores[b] - scores[a]);
+        let basePersona = sortedTypes[0]; // 最高分
+        let maskPersona = sortedTypes[1]; // 次高分
+
+        // 【兜底2】确保 maskPersona 有效
+        if (!maskPersona || scores[maskPersona] === 0) {
+          const otherValid = types.filter(t => t !== basePersona && scores[t] > 0);
+          maskPersona = otherValid.length > 0 ? otherValid[0] : types.find(t => t !== basePersona) || 'F';
         }
 
+        // 【兜底3】极端情况：强制确保两个变量有效
+        if (!basePersona) basePersona = 'L';
+        if (!maskPersona) maskPersona = 'F';
+
+        // ===== 第三步：生成结果 =====
         const titleEl = document.getElementById('result-title');
         const descEl = document.getElementById('result-desc');
         const insightEl = document.getElementById('result-insight');
@@ -611,40 +615,36 @@
           'D': '纯血鹿：受难圣徒。你的善良是一种信仰。在这个疯狂的世界里，你是最后一道防线。你以自我牺牲来救赎他人。'
         };
 
-        // 判断是否为纯血类型
-        if (scores[basePersona] >= 9) {
-          const animalName = questionMap[basePersona][1];
-          const insightText = pureInsights[basePersona] || '你是一个纯粹而强大的存在。';
-          
+        // 判断是否为“纯血”：最高分 ≥ 总分的 60% 且 ≥ 5 分
+        const isPure = scores[basePersona] >= Math.max(5, Math.floor(totalScore * 0.6));
+
+        if (isPure) {
+          const animalName = questionMap[basePersona]?.[1] || '未知生物';
           titleEl.textContent = `【纯血·${animalName}】`;
           descEl.textContent = `你是${animalName}。`;
-          insightEl.textContent = insightText;
+          insightEl.textContent = pureInsights[basePersona] || '你是一个纯粹而强大的存在。';
         } else {
-          // 复合类型
           const comboKey = basePersona + maskPersona;
-          const comboName = comboNames[comboKey] || `${questionMap[basePersona][1]}+${questionMap[maskPersona][1]}`;
+          const comboName = comboNames[comboKey] || `${questionMap[basePersona]?.[1] || '主导者'}+${questionMap[maskPersona]?.[1] || '协作者'}`;
           const description = comboDescriptions[comboKey] || 
-            `${questionMap[basePersona][1]}与${questionMap[maskPersona][1]}的融合体，复杂而多面。`;
-          
+            `你融合了 ${questionMap[basePersona]?.[1] || '狮子'} 的魄力与 ${questionMap[maskPersona]?.[1] || '狐狸'} 的智慧，是都市丛林中的复杂生存者。`;
+
           titleEl.textContent = `${comboName}（${comboKey}）`;
           descEl.textContent = description;
           insightEl.textContent = 
-            `底色是 ${basePersona}（${questionMap[basePersona][1]}）\n` +
-            `面具是 ${maskPersona}（${questionMap[maskPersona][1]}）`;
+            `底色是 ${basePersona}（${questionMap[basePersona]?.[1] || '未知'}）\n` +
+            `面具是 ${maskPersona}（${questionMap[maskPersona]?.[1] || '未知'}）`;
         }
 
         showScreen('result-screen');
       } catch (e) {
-        console.error("Result calculation error:", e);
-        document.getElementById('result-title').textContent = "都市生存者";
-        document.getElementById('result-desc').textContent = "你成功穿越了丛林。真正的答案，或许不在测试里，而在你接下来的选择中。";
-        document.getElementById('result-insight').textContent = "";
+        console.error("Result calculation error (fallback triggered):", e);
+        // ===== 终极兜底：无论如何都要显示结果 =====
+        document.getElementById('result-title').textContent = "【迷雾行者】";
+        document.getElementById('result-desc').textContent = "你游走于规则之外，既非狮、非狐、非猫、非鹿。或许，真正的觉醒，是超越标签本身。";
+        document.getElementById('result-insight').textContent = "—— 测试数据异常，但你的存在无需定义。";
         showScreen('result-screen');
       }
-    }
-
-    function mapChoiceToType(choice) {
-      return { 'A': 'L', 'B': 'F', 'C': 'C', 'D': 'D' }[choice] || null;
     }
   </script>
 </body>
